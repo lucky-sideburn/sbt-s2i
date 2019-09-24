@@ -1,0 +1,33 @@
+#!/bin/bash -e
+#
+# S2I assemble script for the 'sbt-s2i' image.
+# The 'assemble' script builds your application source so that it is ready to run.
+#
+# For more information refer to the documentation:
+#	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
+#
+
+# SBT_SUBPROJECT provides multi project support
+readonly sbt_stage_cmd="${SBT_SUBPROJECT:+${SBT_SUBPROJECT}/}stage"
+readonly sbt_target_dir="${SBT_SUBPROJECT:+${SBT_SUBPROJECT}/}target"
+
+# If the 'sbt-s2i' assemble script is executed with the '-h' flag, print the usage.
+if [[ "$1" == "-h" ]]; then
+	exec /usr/libexec/s2i/usage
+fi
+
+# Restore artifacts from the previous build (if they exist).
+#
+if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
+  echo "---> Restoring build artifacts..."
+  mv /tmp/artifacts/. ./
+fi
+
+echo "---> Installing application source..."
+pwd
+find ./ -name "srv-common"
+find ./ -name "*srv-common*"
+cp -Rf /tmp/src/. ./
+
+echo "---> Building application from source..."
+sbt compile -sbt-dir ${SBT_DIR} -sbt-boot ${SBT_DIR}/boot -ivy ${IVY_DIR}
