@@ -24,10 +24,20 @@ if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
 fi
 
 echo "---> Installing application source..."
-pwd
-find ./ -name "srv-common"
-find ./ -name "*srv-common*"
 cp -Rf /tmp/src/. ./
+pwd && ls -la
+env
 
-echo "---> Building application from source..."
-sbt compile -sbt-dir ${SBT_DIR} -sbt-boot ${SBT_DIR}/boot -ivy ${IVY_DIR}
+if [ ! -z "${SBT_DIR}" ]; then
+
+  echo "---> Building application from source..."
+  sbt ${SBT_TASK} -sbt-dir ${SBT_DIR} -sbt-boot ${SBT_DIR}/boot -ivy ${IVY_DIR}
+  [ ! -z "${SERVER_BIN}" ] && (ls $SERVER_BIN && chmod u+x,g+x $SERVER_BIN)
+
+  if [[ ${OPENSHIFT_BUILD_NAME} =~ ^srv-catalog-[0-9]*$ ]];then
+
+    ls /opt/app-root/src/application/conf || mkdir /opt/app-root/src/application/conf
+
+  fi
+
+fi
